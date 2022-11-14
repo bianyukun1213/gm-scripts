@@ -12,10 +12,18 @@
 (function () {
     'use strict';
 
-    function startProcessing() {
-        if (typeof window.Function !== 'undefined') {
-            window.Function = undefined;
+    window.Func = window.Function;
+    window.Function = function (arg) {
+        if (arg !== 'debugger') {
+            return window.Func(arg);
         }
+    }
+    let consoleIfr = document.createElement('iframe');
+    consoleIfr.id = 'console-iframe';
+    document.body.appendChild(consoleIfr);
+    window.console = consoleIfr.contentWindow.console;
+
+    function startProcessing() {
         let noDownloadBtn = document.getElementsByClassName('download-btn tooltip tooltipstered')[0];
         if (typeof noDownloadBtn !== 'undefined') {
             let par = noDownloadBtn.parentNode;
