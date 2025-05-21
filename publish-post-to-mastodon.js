@@ -53,7 +53,7 @@
         },
         en: {
             contentLimit: 400,
-            siteTag: '#HisSecondLife',
+            siteTag: '#His2ndLife',
             title: 'Title: ',
             author: 'Author: ',
             publicationTime: 'Publication time: ',
