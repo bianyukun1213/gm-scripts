@@ -116,9 +116,9 @@
             'ADDRESS'
         ];
         const skipClasses = [
-            'alertbox alertbox-info',
-            'alertbox alertbox-warning',
-            'alertbox alertbox-danger',
+            // 'alertbox alertbox-info',
+            // 'alertbox alertbox-warning',
+            // 'alertbox alertbox-danger',
             'tide-image-mask'
         ];
         let postContent = '';
