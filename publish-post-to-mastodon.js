@@ -119,7 +119,8 @@
             // 'alertbox alertbox-info',
             // 'alertbox alertbox-warning',
             // 'alertbox alertbox-danger',
-            'tide-image-mask'
+            'image-masonry',
+            'tide-image-figure'
         ];
         let postContent = '';
         const eles = document.getElementsByClassName('e-content')[0].childNodes;
