@@ -5,6 +5,7 @@
 // @description  从 his2nd.life 文章页面中提取内容发布到长毛象中文站。
 // @author       Hollis
 // @match        https://his2nd.life/*/posts/*.html
+// @match        https://8000.cs.nas.yinhe.dev:9981/*/posts/*.html
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=his2nd.life
 // @grant        none
 // @run-at       context-menu
@@ -120,7 +121,8 @@
             // 'alertbox alertbox-warning',
             // 'alertbox alertbox-danger',
             'image-masonry',
-            'tide-image-figure'
+            'tide-image-figure',
+            'tag-common tabs'
         ];
         let postContent = '';
         const eles = document.getElementsByClassName('e-content')[0].childNodes;
