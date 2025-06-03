@@ -151,7 +151,7 @@
     }
 
     function getLink() {
-        return window.location.href;
+        return window.location.href.replace('8000.cs.nas.yinhe.dev:9981', 'his2nd.life');
     }
 
     let targetLang = prompt('输入语言代码');
