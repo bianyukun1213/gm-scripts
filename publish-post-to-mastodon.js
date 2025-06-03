@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         发布博文到长毛象中文站
 // @namespace    https://github.com/bianyukun1213
-// @version      2025-05-21
+// @version      2025-06-03
 // @description  从 his2nd.life 文章页面中提取内容发布到长毛象中文站。
 // @author       Hollis
 // @match        https://his2nd.life/*/posts/*.html
