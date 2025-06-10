@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         发布博文到长毛象中文站
+// @name         跨站发布博文
 // @namespace    https://github.com/bianyukun1213
-// @version      2025-06-03
-// @description  从 his2nd.life 文章页面中提取内容发布到长毛象中文站。
+// @version      2025-06-11
+// @description  从 his2nd.life 文章页面中提取内容发布到其他平台。
 // @author       Hollis
 // @match        https://his2nd.life/*/posts/*.html
 // @match        https://8000.cs.nas.yinhe.dev:9981/*/posts/*.html
@@ -11,7 +11,7 @@
 // @run-at       context-menu
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     // https://moyuscript.github.io/MoyuScript/2024/04/17/handle-unicode-in-js/
@@ -39,32 +39,62 @@
         }
     }
 
+    const platforms = ['mastodon', 'mt', 'telegram', 'tg'];
     const i18n = {
-        zh: {
-            contentLimit: 600,
+        'zh-CN': {
             siteTag: '#他的第二人生',
             title: '标题：',
+            id: 'Id：',
             author: '作者：',
             publicationTime: '发布时间：',
             description: '描述：',
             excerpt: '摘录：',
             postContent: '正文：',
             link: '链接：',
-            additional: '请注意：您在此对于嘟文的互动会被同步至原文页面。若这不是您期望的行为，请不要互动，或私信联系我删除互动。'
+            mastodon: {
+                contentLimit: 600,
+                additional: '请注意：您在此对于嘟文的互动会被同步至原文页面。若这不是您期望的行为，请不要互动，或私信联系我删除互动。'
+            },
+            telegram: {
+                contentLimit: 3400,
+                additional: ''
+            }
         },
         en: {
-            contentLimit: 400,
             siteTag: '#His2ndLife',
             title: 'Title: ',
+            id: 'Id: ',
             author: 'Author: ',
             publicationTime: 'Publication time: ',
             description: 'Description: ',
             excerpt: 'Excerpt: ',
             postContent: 'Content: ',
             link: 'Link: ',
-            additional: 'Please note: Your interaction with this toot will be synchronized to the original page. If this is not intended, please do not interact, or PM me to delete the interaction.'
+            mastodon: {
+                contentLimit: 400,
+                additional: 'Please note: Your interaction with this toot will be synchronized to the original page. If this is not intended, please do not interact, or PM me to delete the interaction.'
+            },
+            telegram: {
+                contentLimit: 3200,
+                additional: ''
+            }
         }
     };
+    for (const lang in i18n) {
+        if (Object.prototype.hasOwnProperty.call(i18n, lang)) {
+            const wd = i18n[lang];
+            wd.mt = wd.mastodon;
+            wd.tg = wd.telegram;
+        }
+    }
+
+    function getPostId() {
+        return window.location.href.split('/').pop().split('.')[0];
+    }
+
+    function getPageLang() {
+        return document.documentElement.lang;
+    }
 
     function getPostTitle() {
         return document.getElementById('tide-page-title').innerText;
@@ -154,23 +184,28 @@
         return window.location.href.replace('8000.cs.nas.yinhe.dev:9981', 'his2nd.life');
     }
 
-    let targetLang = prompt('输入语言代码');
-    if (targetLang !== null) {
-        if (!Object.getOwnPropertyNames(i18n).includes(targetLang))
-            targetLang = 'zh';
-        const contentLimit = i18n[targetLang].contentLimit;
-        let postContent = getPostContent();
-        if (postContent.length > contentLimit) // 字数多了的话，m.cmx.im 会 502。
-            postContent = UnicodeUtils.slice(postContent, 0, contentLimit).trim() + '…';
-        let desc = getDescription();
-        if (desc)
-            desc = i18n[targetLang].description + desc + '\n\n';
-        const finalText = `${i18n[targetLang].siteTag}\n\n${i18n[targetLang].title}${getPostTitle()}\n\n${i18n[targetLang].author}${getAuthor()}\n\n${i18n[targetLang].publicationTime}${getPublicatioinTime()}\n\n${desc}${i18n[targetLang].excerpt}${getExcerpt()}\n\n${i18n[targetLang].postContent}\n\n---\n\n${postContent}\n\n---\n\n${i18n[targetLang].link}${getLink()}\n\n${i18n[targetLang].additional}`;
-        // window.open(`https://m.cmx.im/share?text=${encodeURIComponent(finalText)}`, '_blank'); // 分享接口字数限制更严格。
-        const textarea = document.createElement('textarea');
-        textarea.innerHTML = finalText;
-        textarea.style = 'position:absolute;width:100%;height:100%;z-index:500;';
-        document.documentElement.appendChild(textarea);
-        window.open('https://m.cmx.im/', '_blank', 'popup');
-    }
+    let targetPlatform = prompt('输入发布平台');
+    if (targetPlatform === null) return;
+    let targetLang = getPageLang();
+    if (!Object.getOwnPropertyNames(i18n).includes(targetLang))
+        targetLang = 'zh-CN';
+    const wd = i18n[targetLang];
+    if (!platforms.includes(targetPlatform))
+        targetPlatform = 'mastodon';
+    const contentLimit = wd[targetPlatform].contentLimit;
+    let postContent = getPostContent();
+    if (postContent.length > contentLimit) // 字数多了的话，m.cmx.im 会 502。
+        postContent = UnicodeUtils.slice(postContent, 0, contentLimit).trim() + '…';
+    let desc = getDescription();
+    if (desc)
+        desc = wd.description + desc + '\n\n';
+    const additional = wd[targetPlatform].additional;
+    const finalText = `${wd.siteTag} #${getPostId()}\n\n${wd.title}${getPostTitle()}\n\n${wd.author}${getAuthor()}\n\n${wd.publicationTime}${getPublicatioinTime()}\n\n${desc}${wd.excerpt}${getExcerpt()}\n\n${wd.postContent}\n\n---\n\n${postContent}\n\n---\n\n${wd.link}${getLink()}${additional ? '\n\n' + additional : ''}`;
+    // window.open(`https://m.cmx.im/share?text=${encodeURIComponent(finalText)}`, '_blank'); // 分享接口字数限制更严格。
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = finalText;
+    textarea.style = 'position:absolute;width:100%;height:100%;z-index:500;';
+    document.documentElement.appendChild(textarea);
+    if (targetPlatform === 'mastodon')
+        window.open('https://m.cmx.im/publish', '_blank', 'popup');
 })();
