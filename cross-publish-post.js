@@ -71,7 +71,7 @@
             postContent: 'Content: ',
             link: 'Link: ',
             mastodon: {
-                contentLimit: 400,
+                contentLimit: 10,
                 additional: 'Please note: Your interaction with this toot will be synchronized to the original page. If this is not intended, please do not interact, or PM me to delete the interaction.'
             },
             telegram: {
