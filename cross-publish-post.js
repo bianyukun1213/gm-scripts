@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跨站发布博文
 // @namespace    https://github.com/bianyukun1213
-// @version      2025-07-13
+// @version      2025-08-31
 // @description  从 his2nd.life 文章页面中提取内容发布到其他平台。
 // @author       Hollis
 // @match        https://his2nd.life/*/posts/*.html
@@ -56,8 +56,8 @@
                 additional: '请注意：您在此对于嘟文的互动会被同步至原文页面。若这不是您期望的行为，请不要互动，或私信联系我删除互动。'
             },
             telegram: {
-                contentLimit: 3400,
-                additional: ''
+                contentLimit: 400,
+                additional: '点击“即时预览”查看全文。'
             }
         },
         en: {
@@ -75,8 +75,8 @@
                 additional: 'Please note: Your interaction with this toot will be synchronized to the original page. If this is not intended, please do not interact, or PM me to delete the interaction.'
             },
             telegram: {
-                contentLimit: 3200,
-                additional: ''
+                contentLimit: 800,
+                additional: 'Click “INSTANT VIEW” to check the full post.'
             }
         }
     };
