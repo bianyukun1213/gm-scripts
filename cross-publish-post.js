@@ -75,7 +75,7 @@
                 additional: 'Please note: Your interaction with this toot will be synchronized to the original page. If this is not intended, please do not interact, or PM me to delete the interaction.'
             },
             telegram: {
-                contentLimit: 800,
+                contentLimit: 600,
                 additional: 'Click “INSTANT VIEW” to check the full post.'
             }
         }
@@ -181,7 +181,11 @@
     }
 
     function getLink() {
-        return window.location.href.replace('8000.cs.nas.yinhe.dev:9981', 'his2nd.life');
+        let link = window.location.href.replace('8000.cs.nas.yinhe.dev:9981', 'his2nd.life');
+        if (targetPlatform === 'telegram' || targetPlatform === 'tg') {
+            link = `https://t.me/iv?url=${encodeURIComponent(link)}&rhash=1fb363bb9c9cab`;
+        }
+        return link;
     }
 
     let targetPlatform = prompt('输入发布平台');
