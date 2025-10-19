@@ -8,6 +8,7 @@
 // @match        https://8000.cs.nas.yinhe.dev:9981/*/posts/*.html
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=his2nd.life
 // @grant        GM_registerMenuCommand
+// @run-at       document-end
 // ==/UserScript==
 
 'use strict';
