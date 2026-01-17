@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         跨站发布博文
-// @namespace    https://github.com/bianyukun1213
-// @version      2025-10-19
+// @namespace    a2f8b6c8-5594-453b-9a97-6de2eb1a3c0c
+// @version      1.0.0
 // @description  从 his2nd.life 文章页面中提取内容发布到其他平台。
 // @author       Hollis
 // @match        https://his2nd.life/*/posts/*.html
