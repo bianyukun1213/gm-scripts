@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         使用 2gis.ae 浏览俄罗斯地图
 // @namespace    eab0b7b9-e09c-411b-9061-afde06811ae8
-// @version      1.0.0
+// @version      1.1.0
 // @description  将 2gis.ae 的区域数据更改为俄罗斯，并禁用自动域名重定向。
 // @author       Hollis
 // @match        https://2gis.ae/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=2gis.ae
 // @run-at       document-start
+// @grant        none
 // ==/UserScript==
 
 (function () {
@@ -37,7 +38,7 @@
         }
     }
 
-    // 修改搜索结果为俄罗斯的。
+    // 修改搜索结果、室内商铺等为俄罗斯的。
     intercept('__customcfg', (cfg) => {
         setPath(cfg, ['locale'], 'ru_RU');
         setPath(cfg, ['defaultCountryCode'], 'RU');
@@ -46,71 +47,152 @@
         setPath(state, ['appContext', 'defaultLocale'], 'ru_RU');
     });
 
-    const rules = [];
+    function interceptHTTP(rule) {
+        interceptXHR(rule);
+        interceptFetch(rule);
+    }
 
-    window.interceptXHR = function ({ match, patch }) {
-        rules.push({ match, patch });
-    };
-
-    function deepPatch(obj, key, newValue, visited = new WeakSet()) {
-        if (obj === null || typeof obj !== 'object') return;
-        if (visited.has(obj)) return;
-        visited.add(obj);
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            obj[key] = newValue;
-        }
-        if (Array.isArray(obj)) {
-            for (const item of obj) {
-                deepPatch(item, key, newValue, visited);
+    function interceptXHR(rule) {
+        const open = XMLHttpRequest.prototype.open;
+        const send = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+            let finalURL = url;
+            if (matchRule(url, rule) && rule.request?.query) {
+                const parsed = parseURL(url);
+                rule.request.query(parsed.params);
+                finalURL = parsed.url.toString();
             }
-        } else {
-            for (const v of Object.values(obj)) {
-                deepPatch(v, key, newValue, visited);
+            this.__url = finalURL;
+            this.__method = method;
+            return open.call(this, method, finalURL, ...rest);
+        };
+        XMLHttpRequest.prototype.send = function (body) {
+            // request.body
+            if (body && rule.request?.body && matchRule(this.__url, rule)) {
+                try {
+                    const parsed = JSON.parse(body);
+                    rule.request.body(parsed);
+                    body = JSON.stringify(parsed);
+                } catch { /**/ }
+            }
+            // response.body
+            if (rule.response?.body && matchRule(this.__url, rule)) {
+                this.addEventListener('readystatechange', () => {
+                    if (this.readyState === 4) {
+                        try {
+                            const json = JSON.parse(this.responseText);
+                            rule.response.body(json);
+                            Object.defineProperty(this, 'responseText', {
+                                value: JSON.stringify(json),
+                            });
+                        } catch { /**/ }
+                    }
+                });
+            }
+            return send.call(this, body);
+        };
+    }
+
+    function interceptFetch(rule) {
+        const originalFetch = window.fetch;
+        window.fetch = async function (input, init = {}) {
+            let url = typeof input === 'string' ? input : input.url;
+            if (matchRule(url, rule)) {
+                // query
+                if (rule.request?.query) {
+                    const parsed = parseURL(url);
+                    rule.request.query(parsed.params);
+                    url = parsed.url.toString();
+                }
+                // body
+                if (init.body && rule.request?.body) {
+                    try {
+                        const parsed = JSON.parse(init.body);
+                        rule.request.body(parsed);
+                        init.body = JSON.stringify(parsed);
+                    } catch { /**/ }
+                }
+            }
+            const res = await originalFetch(url, init);
+            if (!matchRule(url, rule) || !rule.response?.body) {
+                return res;
+            }
+            const clone = res.clone();
+            try {
+                const json = await clone.json();
+                rule.response.body(json);
+                return new Response(JSON.stringify(json), {
+                    status: res.status,
+                    statusText: res.statusText,
+                    headers: res.headers
+                });
+            } catch {
+                return res;
             }
         }
     }
 
-    const origOpen = XMLHttpRequest.prototype.open;
-    const origSend = XMLHttpRequest.prototype.send;
+    function parseURL(url) {
+        const u = new URL(url, location.origin);
+        return {
+            url: u,
+            params: u.searchParams
+        };
+    }
 
-    XMLHttpRequest.prototype.open = function (method, url, ...rest) {
-        this.__url = url;
-        return origOpen.call(this, method, url, ...rest);
-    };
-
-    XMLHttpRequest.prototype.send = function (...args) {
-        this.addEventListener('readystatechange', function () {
-            if (this.readyState !== 4) return;
-            if (!this.__url) return;
-            const rule = rules.find(r => {
-                if (typeof r.match === 'function') return r.match(this.__url);
-                if (r.match instanceof RegExp) return r.match.test(this.__url);
-                return false;
-            });
-            if (!rule) return;
-            const ct = this.getResponseHeader('content-type') || '';
-            if (!ct.includes('application/json')) return;
-            try {
-                const data = JSON.parse(this.responseText);
-
-                // 调用用户定义的 patch。
-                rule.patch(data);
-
-                const text = JSON.stringify(data);
-                Object.defineProperty(this, 'responseText', { value: text });
-                Object.defineProperty(this, 'response', { value: text });
-            } catch (e) {
-                console.warn('XHR patch failed', e);
+    function matchRule(url, rule) {
+        if (rule.match?.url && !rule.match.url.test(url)) {
+            return false;
+        }
+        if (rule.match?.query) {
+            const { params } = parseURL(url);
+            for (const [k, v] of Object.entries(rule.match.query)) {
+                if (params.get(k) !== v) return false;
             }
-        });
-        return origSend.apply(this, args);
-    };
+        }
+        return true;
+    }
 
-    // 将响应中的 allow_change_domain 改为 false，防止自动跳转到 2gis.ru 导致登录失效。
-    window.interceptXHR({
-        match: () => true,
-        patch: data => {
-            deepPatch(data, 'allow_change_domain', false);
+    function deepModify(obj, targetKey, modifier) {
+        if (!obj || typeof obj !== 'object') return;
+        if (Array.isArray(obj)) {
+            obj.forEach(v => deepModify(v, targetKey, modifier));
+            return;
+        }
+        for (const key of Object.keys(obj)) {
+            if (key === targetKey) {
+                obj[key] = modifier(obj[key]);
+            } else {
+                deepModify(obj[key], targetKey, modifier);
+            }
+        }
+    }
+
+    // 示例：
+    // interceptHTTP({
+    //     match: {
+    //         url: /2gis/,
+    //         query: {
+    //             locale: 'en_AE',
+    //         }
+    //     },
+    //     request: {
+    //         query(params) {
+    //             params.set('locale', 'ru_RU')
+    //         }
+    //     },
+    //     response: {
+    //         body(body) {
+    //             deepModify(body, 'allow_change_domain', () => false)
+    //         }
+    //     }
+    // });
+
+    interceptHTTP({
+        response: {
+            body(body) {
+                deepModify(body, 'allow_change_domain', () => false);
+            }
         }
     });
 })();
