@@ -17,7 +17,7 @@
         prompt('You can copy the original Url from here.', location.origin + sessionStorage.getItem('originalUrl'));
     };
     window.editRegionStr = function () {
-        const res = prompt('Input "regionStr" here.\nYour can get "regionStr" of the target city by visiting 2gis.ru and executing "console.log(JSON.stringify(initialState.data.region))".', regionStr || '');
+        const res = prompt(`Input 'regionStr' here.\nYour can get 'regionStr' of the target city by visiting 2gis.ru and executing 'console.log(JSON.stringify(initialState.data.region))'.`, regionStr || '');
         if (res) {
             localStorage.setItem('regionStr', res);
             location.reload();
@@ -61,17 +61,22 @@
     });
 
     function intercept(name, patchFn) {
-        let value;
-        Object.defineProperty(window, name, {
-            configurable: true,
-            set(v) {
-                patchFn?.(v);
-                value = v;
-            },
-            get() {
-                return value;
-            }
-        });
+        try {
+            let value;
+            Object.defineProperty(window, name, {
+                configurable: true,
+                set(v) {
+                    patchFn?.(v);
+                    value = v;
+                },
+                get() {
+                    return value;
+                }
+            });
+        }
+        catch {
+            console.error(`Failed to intercept on '${name}'.`);
+        }
     }
 
     function setPath(obj, path, val) {
