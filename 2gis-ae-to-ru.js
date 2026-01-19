@@ -44,6 +44,7 @@
         regionId = null;
         regionDefaultPos = null;
         center = null;
+        console.log('regionStr is invalid.');
     }
     // 添加显示 Url 的按钮。
     window.addEventListener('load', function () {
