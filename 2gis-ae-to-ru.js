@@ -75,7 +75,7 @@
             });
         }
         catch {
-            console.error(`Failed to intercept on '${name}'.`);
+            console.error(`Failed to intercept '${name}'.`);
         }
     }
 
