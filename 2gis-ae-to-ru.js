@@ -253,6 +253,18 @@
             }
         }
     });
+    let favorites = {};
+    interceptHTTP({
+        match: {
+            url: /\/2\.0\/personal\/collections\/sync/
+        },
+        response: {
+            body(body) {
+                favorites = body.personal_favorites.objects;
+                // console.log(favorites);
+            }
+        }
+    });
 
     function wrapHistory(method) {
         const original = history[method];
