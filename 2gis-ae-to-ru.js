@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Browse Russian map on 2gis.ae
 // @namespace    eab0b7b9-e09c-411b-9061-afde06811ae8
-// @version      1.2.0
+// @version      1.3.0
 // @description  Change the region of 2gis.ae to Russia and block automatic redirection to 2gis.ru.
 // @author       Hollis
 // @match        https://2gis.ae/*
@@ -115,9 +115,11 @@
         const send = XMLHttpRequest.prototype.send;
         XMLHttpRequest.prototype.open = function (method, url, ...rest) {
             let finalURL = url;
-            if (matchRule(url, rule) && rule.request?.query) {
+            if (matchRule(url, rule) && rule.request?.url) {
+                finalURL = rule.request.url(this.__url);
+            } else if (matchRule(url, rule) && rule.request?.query) {
                 const parsed = parseURL(url);
-                rule.request.query(parsed.params);
+                parsed.params = rule.request.query(parsed.params);
                 finalURL = parsed.url.toString();
             }
             this.__url = finalURL;
@@ -128,8 +130,8 @@
             // request.body
             if (body && rule.request?.body && matchRule(this.__url, rule)) {
                 try {
-                    const parsed = JSON.parse(body);
-                    rule.request.body(parsed);
+                    let parsed = JSON.parse(body);
+                    parsed = rule.request.body(parsed);
                     body = JSON.stringify(parsed);
                 } catch { /**/ }
             }
@@ -138,8 +140,8 @@
                 this.addEventListener('readystatechange', () => {
                     if (this.readyState === 4) {
                         try {
-                            const json = JSON.parse(this.responseText);
-                            rule.response.body(json);
+                            let json = JSON.parse(this.responseText);
+                            json = rule.response.body(json);
                             Object.defineProperty(this, 'responseText', {
                                 value: JSON.stringify(json),
                             });
@@ -157,16 +159,19 @@
             let url = typeof input === 'string' ? input : input.url;
             if (matchRule(url, rule)) {
                 // query
-                if (rule.request?.query) {
+                if (rule.request?.url) {
+                    url = rule.request.url(url);
+                }
+                else if (rule.request?.query) {
                     const parsed = parseURL(url);
-                    rule.request.query(parsed.params);
+                    parsed.params = rule.request.query(parsed.params);
                     url = parsed.url.toString();
                 }
                 // body
                 if (init.body && rule.request?.body) {
                     try {
-                        const parsed = JSON.parse(init.body);
-                        rule.request.body(parsed);
+                        let parsed = JSON.parse(init.body);
+                        parsed = rule.request.body(parsed);
                         init.body = JSON.stringify(parsed);
                     } catch { /**/ }
                 }
@@ -177,8 +182,8 @@
             }
             const clone = res.clone();
             try {
-                const json = await clone.json();
-                rule.response.body(json);
+                let json = await clone.json();
+                json = rule.response.body(json);
                 return new Response(JSON.stringify(json), {
                     status: res.status,
                     statusText: res.statusText,
@@ -237,11 +242,13 @@
     //     request: {
     //         query(params) {
     //             params.set('locale', 'ru_RU')
+    //             return params
     //         }
     //     },
     //     response: {
     //         body(body) {
     //             deepModify(body, 'allow_change_domain', () => false)
+    //             return body
     //         }
     //     }
     // });
@@ -250,9 +257,40 @@
         response: {
             body(body) {
                 deepModify(body, 'allow_change_domain', () => false);
+                return body;
             }
         }
     });
+    // /v2/ald
+    // interceptHTTP({
+    //     match: {
+    //         url: /ald/
+    //     },
+    //     request: {
+    //         query(params) {
+    //             params.set('x', '0')
+    //             params.set('y', '0')
+    //             return params
+    //         }
+    //     },
+    //     response: {
+    //         body(body) {
+    //             body.features = [];
+    //             return body;
+    //         }
+    //     }
+    // });
+    // interceptHTTP({
+    //     match: {
+    //         url: /^https:\/\/disk\.2gis\.com\/styles\/assets\/icons\b/
+    //     },
+    //     request: {
+    //         url(url) {
+    //             url = '';
+    //             return url;
+    //         }
+    //     }
+    // });
     let favorites = {};
     interceptHTTP({
         match: {
@@ -261,10 +299,76 @@
         response: {
             body(body) {
                 favorites = body.personal_favorites.objects;
+                return body;
                 // console.log(favorites);
             }
         }
     });
+    window.displayFavorites = function () {
+        prompt('Favorites', JSON.stringify(favorites));
+    };
+
+    // const currentRule = `{
+    //     match: {
+    //         url: /ald/
+    //     },
+    //     request: {
+    //         query(params) {
+    //             params.set('x', '0')
+    //             params.set('y', '0')
+    //             return params
+    //         }
+    //     },
+    //     response: {
+    //         body(body) {
+    //             body.features = [];
+    //             return body;
+    //         }
+    //     }
+    // }`;
+    // 1. 获取所有需要的函数的源码字符串
+    // 注意：这些函数内部依赖的任何外部变量都必须也包含在内，或者作为参数传入
+    // const dependencyFunctions = [
+    //     parseURL,
+    //     matchRule,
+    //     deepModify,
+    //     interceptXHR,
+    //     interceptFetch,
+    //     interceptHTTP
+    // ].map(fn => fn.toString()).join('\n\n');
+    //2. 拦截 Worker
+    // const OriginalWorker = window.Worker;
+    // window.Worker = class extends OriginalWorker {
+    //     constructor(scriptURL, options) {
+    //         // 将规则对象序列化为 JSON 字符串
+    //         const ruleString = currentRule;
+    //         // 构造要注入到 Worker 内部的代码
+    //         const interceptorCode = `
+    //         /* [注入开始] 模拟环境 */
+    //         var window = self; // Worker 中没有 window，强制指向 self 以兼容原有代码
+    //         /* [注入] 规则数据 */
+    //         const rule = ${ruleString};
+    //         /* [注入] 工具函数 */
+    //         ${dependencyFunctions}
+    //         /* [执行] 启动拦截 */
+    //         try {
+    //             // 启动你的拦截逻辑
+    //             interceptHTTP(rule);
+    //             console.log('[UserScript] Worker 拦截已启动');
+    //         } catch (e) {
+    //             console.error('[UserScript] Worker 拦截启动失败', e);
+    //         }
+    //         /* [加载] 原始 Worker 脚本 */
+    //         // 注意：如果是 blob URL，importScripts 有时会受限于 CSP，但在同源下通常可行
+    //         importScripts('${scriptURL}');
+    //     `;
+    //         // 创建新的 Blob
+    //         const blob = new Blob([interceptorCode], { type: 'application/javascript' });
+    //         const newURL = URL.createObjectURL(blob);
+    //         // 使用修改后的 URL 启动 Worker
+    //         super(newURL, options);
+    //     }
+    // };
 
     function wrapHistory(method) {
         const original = history[method];
