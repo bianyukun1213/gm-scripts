@@ -334,6 +334,7 @@
             fields: {
                 "word": data.word || "",
                 "explanation": explanation,
+                "comment": "",
                 "nominative.singular": d.nominative?.singular || "",
                 "nominative.plural": d.nominative?.plural || "",
                 "genitive.singular": d.genitive?.singular || "",
@@ -385,6 +386,7 @@
             fields: {
                 "word": data.word || "",
                 "explanation": "",
+                "comment": "",
                 "pres.first.singular": pres.first?.singular || "",
                 "pres.second.singular": pres.second?.singular || "",
                 "pres.third.singular": pres.third?.singular || "",
