@@ -485,7 +485,7 @@
 </table>`;
         };
 
-        const htmlOutput = verbs.map(v => generateTableHTML(v)).join('<br><br>\n');
+        const htmlOutput = verbs.map(v => generateTableHTML(v)).join('\n');
         GM_setClipboard(htmlOutput, 'text');
         alert('动词表格 HTML 已成功复制到剪贴板！');
     };
