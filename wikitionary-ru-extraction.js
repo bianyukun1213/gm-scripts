@@ -444,8 +444,7 @@
             const pastStr = [past.masculine, past.feminine, past.neuter, past.plural].filter(Boolean).join(' / ');
             const impStr = [imp.singular, imp.plural].filter(Boolean).join(' / ');
 
-            return `
-<table>
+            return `<table>
     <tbody>
         <tr>
             <td></td>
