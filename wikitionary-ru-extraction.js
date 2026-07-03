@@ -308,8 +308,8 @@
 
         // 标签：词性与软音符号解释
         if (baseWordLower.endsWith('ь')) {
-            if (g.gender === 'masculine') explanation = '[阳]';
-            if (g.gender === 'feminine') explanation = '[阴]';
+            if (g.gender === 'masculine') explanation = '[阳] ';
+            if (g.gender === 'feminine') explanation = '[阴] ';
         }
 
         // 标签：词性不顺应拼写
@@ -366,8 +366,8 @@
         const tags = [];
         let explanation = '';
 
-        if (g.aspect === 'perfective') explanation = '[完]';
-        else if (g.aspect === 'imperfective') explanation = '[未完]';
+        if (g.aspect === 'perfective') explanation += '[完] ';
+        if (g.aspect === 'imperfective') explanation += '[未完] ';
 
         if (g.aspect === 'perfective') tags.push('完成体');
         if (g.aspect === 'imperfective') tags.push('未完成体');
