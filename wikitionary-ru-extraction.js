@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wiktionary RU Morphology & Anki Integration
 // @namespace    ad680c9c-02b5-4710-9bcc-be32c1df8a13
-// @version      1.0.0
+// @version      1.1.0
 // @description  从 ru.wiktionary 提取数据并一键生成 Anki 记忆卡片
 // @author       Hollis
 // @match        https://ru.wiktionary.org/api/rest_v1/page/html/*
@@ -364,6 +364,10 @@
         const g = data.grammarInfo;
         const conj = data.declensionConjugation || {};
         const tags = [];
+        let explanation = '';
+
+        if (g.aspect === 'perfective') explanation = '[完]';
+        else if (g.aspect === 'imperfective') explanation = '[未完]';
 
         if (g.aspect === 'perfective') tags.push('完成体');
         if (g.aspect === 'imperfective') tags.push('未完成体');
@@ -385,7 +389,7 @@
             modelName: ANKI_MODEL_VERB,
             fields: {
                 "word": data.word || "",
-                "explanation": "",
+                "explanation": explanation,
                 "comment": "",
                 "pres.first.singular": pres.first?.singular || "",
                 "pres.second.singular": pres.second?.singular || "",
