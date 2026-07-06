@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wiktionary RU Morphology & Anki Integration
 // @namespace    ad680c9c-02b5-4710-9bcc-be32c1df8a13
-// @version      1.1.0
+// @version      1.2.0
 // @description  从 ru.wiktionary 提取数据并一键生成 Anki 记忆卡片
 // @author       Hollis
 // @match        https://ru.wiktionary.org/api/rest_v1/page/html/*
@@ -367,7 +367,7 @@
         let explanation = '';
 
         if (g.aspect === 'perfective') explanation += '[完] ';
-        if (g.aspect === 'imperfective') explanation += '[未完] ';
+        if (g.aspect === 'imperfective') explanation += '[未] ';
 
         if (g.aspect === 'perfective') tags.push('完成体');
         if (g.aspect === 'imperfective') tags.push('未完成体');
@@ -438,8 +438,10 @@
             const word = verbData.word || '';
             const g = verbData.grammarInfo || {};
             const conj = verbData.declensionConjugation || {};
+            let explanation = '';
+            if (g.aspect === 'perfective') explanation += '[完] '; if (g.aspect === 'imperfective') explanation += '[未] ';
             let propsStr = '';
-            if (g.aspect === 'perfective') propsStr += '[完]'; else if (g.aspect === 'imperfective') propsStr += '[未完]';
+            if (g.aspect === 'perfective') propsStr += '[完]'; if (g.aspect === 'imperfective') propsStr += '[未]';
             if (g.transitivity === 'transitive') propsStr += '[及]'; else if (g.transitivity === 'intransitive') propsStr += '[不及]';
             if (g.motion === 'determinate') propsStr += '[运|定]'; else if (g.motion === 'indeterminate') propsStr += '[运|不定]'; else if (g.motion === 'motion_verb') propsStr += '[运]';
             if (g.conjugation === 'first') propsStr += '[一]'; else if (g.conjugation === 'second') propsStr += '[二]'; else if (g.conjugation === 'irregular') propsStr += '[特]';
@@ -457,7 +459,7 @@
             <th>${word}</th></tr>
         <tr>
             <th>释义</th>
-            <td></td>
+            <td>${explanation}</td>
         </tr>
         <tr>
             <th>属性</th>
