@@ -94,11 +94,10 @@ for (const lang in i18n) {
 
 function getElementByXPath(xpathExpr) {
     const result = document.evaluate(xpathExpr, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-    if (result && result.singleNodeValue) {
+    if (result && result.singleNodeValue)
         return result.singleNodeValue;
-    } else {
-        return null; // 如果没有找到匹配的元素，则返回null
-    }
+    else
+        return null;
 }
 
 function getPostId() {
@@ -187,7 +186,6 @@ function getPostContent() {
         }
     }
     for (const p of ps) {
-        console.log(p.className)
         postContent += (p.className === 'markdown-heading' ? `\n${p.textContent.trim()}\n\n` : `${p.textContent.trim()}\n`);
     }
     // postContent = postContent.replace(/\n{2,}/g, '\n'); // 移除多个 \n。
