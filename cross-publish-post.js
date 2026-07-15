@@ -198,7 +198,7 @@ function getPostContent() {
 }
 
 function getLink(targetPlatform) {
-    let link = window.location.href.replace('8000.cs.nas.yinhe.dev:9981', 'his2nd.life');
+    let link = window.location.href.replace('localhost:4321', 'his2nd.life');
     if (targetPlatform === 'telegram' || targetPlatform === 'tg') {
         link = `https://t.me/iv?url=${encodeURIComponent(link)}&rhash=1fb363bb9c9cab`;
     }
