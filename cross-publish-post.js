@@ -117,7 +117,7 @@ function getAuthor(targetLang) {
 }
 
 function getPublicationTime() {
-    const date = getElementByXPath('/html/body/main/div/div[1]/div[1]/span');
+    const date = getElementByXPath('//*[@id="skip-to-content"]/div/div[2]/div[1]/span[1]');
     return date ? date.textContent.replace(' — ', '') : '';
 }
 
